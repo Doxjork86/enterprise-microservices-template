@@ -1,0 +1,59 @@
+services:
+  # --- CAPA 1: GATEWAY (PÚBLICA) ---
+  proxy:
+    image: nginx:alpine
+    ports:
+      - "8080:80"  # Único puerto expuesto al mundo (en tu Mac)
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/html:/usr/share/nginx/html:ro
+    depends_on:
+      - backend
+    networks:
+      - public_net
+      - internal_net
+
+  # --- CAPA 2: BACKEND (PRIVADA) ---
+  backend:
+    build: ./backend
+    environment:
+      - DB_HOST=db
+      - DB_NAME=${POSTGRES_DB}
+      - DB_USER=${POSTGRES_USER}
+      - DB_PASSWORD=${POSTGRES_PASSWORD}
+    depends_on:
+      db:
+        condition: service_healthy  # ¡Espera a que la DB esté sana de verdad!
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - internal_net # No tiene acceso a public_net, solo Nginx le habla.
+
+  # --- CAPA 3: DATOS (AISLADA) ---
+  db:
+    image: postgres:15-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - internal_net
+
+# Definición de Redes
+networks:
+  public_net:   # Red para el exterior
+  internal_net: # Red privada backend <-> db
+
+volumes:
+  pg_data:
