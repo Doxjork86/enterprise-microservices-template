@@ -1,12 +1,15 @@
 services:
   # --- CAPA 1: GATEWAY (PÚBLICA) ---
-  proxy:
-    image: nginx:alpine
+  image: nginx:alpine
+    read_only: true  # 1. Bloqueo TODO el disco duro
     ports:
-      - "8080:80"  # Único puerto expuesto al mundo (en tu Mac)
+      - "8080:80"
     volumes:
-      - ./nginx/conf.d:/etc/nginx/conf.d:ro
-      - ./nginx/html:/usr/share/nginx/html:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro  # 2. Inyecto mi config segura
+      - ./nginx/html:/usr/share/nginx/html:ro # 3. Inyecto mi web segura
+    tmpfs:
+      - /var/cache/nginx    # 4. Le doy RAM para que no muera
+      - /var/run
     depends_on:
       - backend
     networks:
