@@ -34,6 +34,15 @@ services:
       retries: 3
     networks:
       - internal_net # No tiene acceso a public_net, solo Nginx le habla.
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'      # Máximo medio núcleo de CPU
+          memory: 512M      # Máximo 512 Megabytes de RAM (Si se pasa, ¡muere!)
+        reservations:
+          cpus: '0.10'      # Necesito al menos un 10% de CPU garantizado
+          memory: 128M      # Necesito al menos 128MB libres para arrancar
+    
 
   # --- CAPA 3: DATOS (AISLADA) ---
   db:
