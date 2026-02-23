@@ -3,7 +3,7 @@ services:
   image: nginx:alpine
   # --- Esta linea aplicable por si va a un entorno de PROD --- 
     read_only: true  # 1. Bloqueo TODO el disco duro
-   # --- FIN DE LA LINEA--- 
+  # --- FIN DE LA LINEA--- 
     ports:
       - "8080:80"
     volumes:
